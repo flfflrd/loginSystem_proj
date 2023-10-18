@@ -10,7 +10,7 @@ using namespace std;
 
 vector<pair<string, string>> userpass;
 
-// big thanks to Sithum and ChatGPT
+// Big thanks to Sithum and ChatGPT for this hasher. No idea how it works.
 string stringhasher(const string& input) {
     unsigned char obuf[20];
     const unsigned char* ibuf = reinterpret_cast<const unsigned char*>(input.c_str());
@@ -43,64 +43,55 @@ int Read() {
 
 int Write() {
 	ofstream userpass_db ("userpass_db");
-	for (int i=0; i<userpass.size(); i++) {
-		userpass_db << userpass[i].first << endl;
-		userpass_db << userpass[i].second << endl;
+	for (const auto& pair : userpass) {
+		userpass_db << pair.first << endl;
+		userpass_db << pair.second << endl;
 	}
 	userpass_db.close();
 	return 0;
 }
 
-int Login() {
-	cout << "Username: ";
-	string username_input;
-	cin >> username_input;
-	cout << "Password: ";
-	string password_input;
-	cin >> password_input;
-	password_input = stringhasher(password_input);
-
-	for (int i=0; i<userpass.size(); i++) {
-		if (userpass[i].first == username_input) {
-			if (userpass[i].second == password_input) {
-				cout << "Login successful\n";
-				return 0;
+int UserAccess(int option, string user, string pass) {
+	switch (option) {
+		case 0:
+			pass = stringhasher(pass);
+			for (const auto& pair : userpass) {
+				if (pair.first == user && pair.second == pass) {
+					cout << "Login successful\n";
+					return 0;
+				}
 			}
-		}
+			cout << "Incorrect username or password\n";
+			return 1;
+			break;
+		case 1:
+			string hashed_pass = stringhasher(pass);
+			userpass.emplace_back(user, hashed_pass);
+			return 0;
+			break;
 	}
-	cout << "Incorrect username or password\n";
 	return 1;
-}
-
-int NewUser() {
-	
-	cout << "Username: ";
-	string username_input;
-	cin >> username_input;
-	cout << "Password: ";
-	string password_input;
-	cin >> password_input;
-	password_input = stringhasher(password_input);
-
-	userpass.emplace_back(username_input, password_input);
-
-	return 0;
-
 }
 
 int main(int argc, char* argv[]) {
 	Read();
 
-	if (argc > 1) {
-		if (!strcmp(argv[1], "-h")) {
-			cout << "-h \t Shows this message\n";
-			cout << "-l \t Login\n";
-			cout << "-r \t Register\n";
-		} else if (!strcmp(argv[1], "-l")) {
-			Login();
-		} else if (!strcmp(argv[1], "-r")) {
-			NewUser();
-		}
+	if (argc == 3) {
+		string username_input = argv[2];
+		string password_input;
+		cout << "Password: ";
+		cin >> password_input;
+		int option;
+		if (!strcmp(argv[1], "-l"))
+			option = 0;
+		if (!strcmp(argv[1], "-r"))
+			option = 1;
+		UserAccess(option, username_input, password_input);
+	} else {
+		cout << "Usage: loginChecker [option] <username>\n";
+		cout << "-h \t Shows this message\n";
+		cout << "-l \t Login\n";
+		cout << "-r \t Register\n";
 	}
 
 	Write();
